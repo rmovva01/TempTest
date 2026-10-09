@@ -1,0 +1,21 @@
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-*}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      # Bound to localhost: on the server Caddy is the only public entry
+      # point, so the app cannot be reached on the raw IP bypassing HTTPS.
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    depends_on:
+      - backend
